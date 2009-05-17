@@ -51,9 +51,9 @@ module PDF_Chinese
 
     def AddCIDFonts(family,name,cw,cMap,registry)
         AddCIDFont(family,'',name,cw,cMap,registry)
-        AddCIDFont(family,'B',name.',Bold',cw,cMap,registry)
-        AddCIDFont(family,'I',name.',Italic',cw,cMap,registry)
-        AddCIDFont(family,'BI',name.',BoldItalic',cw,cMap,registry)
+        AddCIDFont(family,'B',name+',Bold',cw,cMap,registry)
+        AddCIDFont(family,'I',name+',Italic',cw,cMap,registry)
+        AddCIDFont(family,'BI',name+',BoldItalic',cw,cMap,registry)
     end
 
     def AddBig5Font(family='Big5',name='MSungStd-Light-Acro')
@@ -65,7 +65,7 @@ module PDF_Chinese
     end
 
     def AddBig5hwFont(family='Big5-hw',name='MSungStd-Light-Acro')
-        # Add Big5 font with half-witdh Latin
+        # Add Big5 font with half-width Latin
         cw = {}
         32.upto(126) do |i|
             cw[i.chr]=500
@@ -109,7 +109,7 @@ module PDF_Chinese
         i=0
         while i<nb
             c=s[i]
-            if(ord($c)<128)
+            if c.ord < 128
                 l += cw[c]
                 i += 1
             else
@@ -158,8 +158,11 @@ module PDF_Chinese
             # Get next character
             c=s[i]
             # Check if ASCII or MB
-            ascii=c<128
-            if c=="\n"
+            ascii = false
+            if c < 128
+                ascii = true
+            end
+            if c.chr=="\n"
                 # Explicit line break
                 Cell(w,h,s[j..i-j],b,2,align,fill)
                 i+=1
@@ -169,16 +172,21 @@ module PDF_Chinese
                 nl+=1
                 if border and nl==2
                     b=b2
+		end
                 next
             end
-            unless ascii
+            if not ascii
                 sep=i
                 ls=l
-            elsif c==' '
+            elsif c.chr==' '
                 sep=i
                 ls=l
             end
-            l += ascii ? cw[c] : 1000
+            if ascii
+                l += cw[c.chr]
+            else
+                l += 1000
+            end
             if l>wmax
                 # Automatic line break
                 if sep==-1 or i==j
@@ -194,9 +202,10 @@ module PDF_Chinese
                 nl+=1
                 if border and nl==2
                     b=b2
+                end
+            else
+                i+=$ascii ? 1 : 2
             end
-        else
-            i+=$ascii ? 1 : 2
         end
 
         # Last chunk
@@ -229,8 +238,11 @@ module PDF_Chinese
             # Get next character
             c=s[i]
             # Check if ASCII or MB
-            ascii=(c<128)
-            if c=="\n"
+            ascii = false
+            if c < 128
+                ascii = true
+            end
+            if c.chr=="\n"
                 #Explicit line break
                 Cell(w,h,s[j..i-j],0,2,'',0,link)
                 i+=1
@@ -245,9 +257,12 @@ module PDF_Chinese
                 nl+=1
                 next
             end
-            sep=i if not ascii or c==' '
-
-            l+=ascii ? cw[c] : 1000
+            sep=i if not ascii or c.chr==' '
+            if ascii
+                l += cw[c.chr]
+            else
+                l += 1000
+            end
             if l>wmax
                 # Automatic line break
                 if sep==-1 or i==j
@@ -310,8 +325,6 @@ private
                     file = FPDF_FONTPATH + '/' + file
                 end
             end
-            if(defined('FPDF_FONTPATH'))
-                $file=FPDF_FONTPATH.$file;
             size = File.size(file)
             unless File.exists?(file)
                 Error('Font file not found')
@@ -319,9 +332,11 @@ private
             out('<</Length '+size.to_s)
             if file[-2]=='.z'
                 out('/Filter /FlateDecode')
+            end
             out('/Length1 '+info['length1'])
             if info['length2']
                 out('/Length2 '+info['length2']+' /Length3 0')
+            end
             out('>>')
             putstream(IO.read(file))
             out('endobj')
@@ -345,7 +360,7 @@ private
                     end
                 else
                     # Additional font
-                    out('/Subtype /'.$font['type'])
+                    out('/Subtype /' + font['type'])
                     out('/FirstChar 32')
                     out('/LastChar 255')
                     out('/Widths '+(@n+1).to_s+' 0 R')
@@ -403,9 +418,9 @@ private
         out('/BaseFont /'+font['name'])
         out('/CIDSystemInfo <</Registry '+textstring('Adobe')+' /Ordering '+
             textstring(font['registry']['ordering'])+' /Supplement '+
-            font['registry']['supplement']+'>>')
+            font['registry']['supplement'].to_s+'>>')
         out('/FontDescriptor '+(@n+1).to_s+' 0 R')
-        w='1 ['+font['cw'].join(' ')+']'
+        w='1 ['+font['cw'].values.join(' ')+']'
         if font['CMap']=='ETen-B5-H'
             w='13648 13742 500'
         elsif(font['CMap']=='GBK-EUC-H')
