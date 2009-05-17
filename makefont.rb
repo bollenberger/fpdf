@@ -1,9 +1,12 @@
 #!/usr/bin/env ruby
 #
 # Utility to generate font definition files
-# Version: 1.0
-# Date:    2005-01-25
+# Version: 1.1
+# Date:    2006-07-19
 #
+# Changelog:
+#  Version 1.1 - Brian Ollenberger
+#   - Fixed a very small bug in MakeFont for generating FontDef.diff.
 
 Charencodings = {
 # Central Europe
@@ -1671,9 +1674,9 @@ def MakeFont(fontfile, afmfile, enc = 'cp1252', patch = {}, type = 'TrueType')
             raise "Error: unrecognized font file extension: #{ext}"
         end
     else
-	raise "Error: incorrect font type: #{type}" if (type != 'TrueType') && (type != 'Type1')
+	    raise "Error: incorrect font type: #{type}" if (type != 'TrueType') && (type != 'Type1')
     end
-printf "type = #{type}\n"
+    printf "type = #{type}\n"
     # Start generation
     s  = "# #{fm['FontName']} font definition\n\n"
     s += "module FontDef\n"
@@ -1696,7 +1699,7 @@ printf "type = #{type}\n"
     s += "    def FontDef.cw\n#{w}\n    end\n"
 
     s += "    def FontDef.enc\n        '#{enc}'\n    end\n"
-    s += "    def FontDef.diff\n        #{(diff == nil) || (diff == '') ? 'nil' : diff}\n    end\n"
+    s += "    def FontDef.diff\n        #{(diff == nil) || (diff == '') ? 'nil' : '\'' + diff '\''}\n    end\n"
 
     basename = File.basename(afmfile, '.*')
 

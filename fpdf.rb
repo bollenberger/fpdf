@@ -1,21 +1,25 @@
-# Ruby FPDF 1.53a
+# Ruby FPDF 1.53d
 # FPDF 1.53 by Olivier Plathey ported to Ruby by Brian Ollenberger
 # Copyright 2005 Brian Ollenberger
 # Please retain this entire copyright notice. If you distribute any
 # modifications, place an additional comment here that clearly indicates
-# that it was modified. You may send any useful modifications that you make
-# back to me at http://brian.imxcc.com/fpdf/
+# that it was modified. You may (but are not  send any useful modifications that you make
+# back to me at http://zeropluszero.com/software/fpdf/
 
 # Bug fixes, examples, external fonts, JPEG support, and upgrade to version
 # 1.53 contributed by Kim Shrier.
 #
-# Bookmarks contributed by Sylvain Lafleur.
+# Bookmark support contributed by Sylvain Lafleur.
+#
+# EPS support contributed by Thiago Jackiw, ported from the PHP version by Valentin Schmidt.
+#
+# Many other bug reports and fixes contributed by many other people.
 
 require 'date'
 require 'zlib'
 
 class FPDF
-    FPDF_VERSION = '1.53c'
+    FPDF_VERSION = '1.53d'
 
     Charwidths =  {
         'courier'=>[600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600],
@@ -897,7 +901,7 @@ class FPDF
             return @buffer
         else
             # Save file locally
-            File.open(file,'wb') do |f|
+            open(file,'wb') do |f|
                 f.write(@buffer)
             end
         end
@@ -1011,7 +1015,9 @@ class FPDF
             out('/Length1 ' + info['length1'])
             out('/Length2 ' + info['length2'] + ' /Length3 0') if info['length2']
             out('>>')
-            putstream(IO.read(file))
+            open(file, 'rb') do |f|
+                putstream(f.read())
+            end
             out('endobj')
         end
 
@@ -1043,7 +1049,7 @@ class FPDF
                 out('/FontDescriptor '+(@n+2).to_s+' 0 R')
                 if font['enc'] and font['enc'] != ''
                     unless font['diff'].nil?
-                        out('/Encoding '+(nf+font['diff'])+' 0 R')
+                        out('/Encoding '+(nf+font['diff']).to_s+' 0 R')
                     else
                         out('/Encoding /WinAnsiEncoding')
                     end
@@ -1316,7 +1322,7 @@ class FPDF
 
         # Read whole file
         data = nil
-        File.open(file, 'rb') do |f|
+        open(file, 'rb') do |f|
             data = f.read
         end
         return {'w'=>a['width'],'h'=>a['height'],'cs'=>colspace,'bpc'=>bpc,'f'=>'DCTDecode','data'=>data}
@@ -1324,7 +1330,7 @@ class FPDF
 
     def parsepng(file)
         # Extract info from a PNG file
-        f=File.open(file,'rb')
+        f=open(file,'rb')
         # Check signature
         unless f.read(8)==137.chr+'PNG'+13.chr+10.chr+26.chr+10.chr
             self.Error('Not a PNG file: '+file)
@@ -1470,7 +1476,7 @@ class FPDF
     def extractjpginfo(file)
         result = nil
 
-        File.open(file, "rb") do |f|
+        open(file, "rb") do |f|
             marker = jpegnextmarker(f)
 
             if marker != M_SOI
