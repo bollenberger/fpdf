@@ -552,7 +552,7 @@ class FPDF
 
     def Link(x, y, w, h, link)
         # Put a link on the page
-        @PageLinks[@page]=Array.new unless @PageLinks.has_key?(@Page)
+        @PageLinks[@page]=Array.new unless @PageLinks.has_key?(@page)
         @PageLinks[@page].push([x*@k,@hPt-y*@k,w*@k,h*@k,link])
     end
 
