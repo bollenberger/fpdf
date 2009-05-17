@@ -455,9 +455,13 @@ class FPDF
 
         if FontDef.diff
             # Search existing encodings
-            unless @diffs.include?(FontDef.diff)
+            idx = @diffs.index(FontDef.diff)
+            
+            unless idx
                 @diffs.push(FontDef.diff)
-                @fonts[fontkey]['diff'] = @diffs.length - 1
+                @fonts[fontkey]['diff'] = @diffs.length
+            else
+                @fonts[fontkey]['diff'] = idx + 1
             end
         end
 
