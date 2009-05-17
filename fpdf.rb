@@ -8,12 +8,14 @@
 
 # Bug fixes, examples, external fonts, JPEG support, and upgrade to version
 # 1.53 contributed by Kim Shrier.
+#
+# Bookmarks contributed by Sylvain Lafleur
 
 require 'date'
 require 'zlib'
 
 class FPDF
-    FPDF_VERSION = '1.53a'
+    FPDF_VERSION = '1.53b'
 
     Charwidths =  {
         'courier'=>[600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600],
@@ -413,15 +415,15 @@ class FPDF
 
         fontkey = family + style
 
-        if @fonts.has_key?(fontkey) then
+        if @fonts.has_key?(fontkey)
              self.Error("Font already added: #{family} #{style}")
         end
 
         file = family.gsub(' ', '') + style.downcase + '.rb' if file == ''
 
-        if self.class.const_defined? 'FPDF_FONTPATH' then
-            if FPDF_FONTPATH[-1,1] == '/' then
-                 file = FPDF_FONTPATH + file
+        if self.class.const_defined? 'FPDF_FONTPATH'
+            if FPDF_FONTPATH[-1,1] == '/'
+                file = FPDF_FONTPATH + file
             else
                 file = FPDF_FONTPATH + '/' + file
             end
@@ -429,8 +431,8 @@ class FPDF
 
          require file
 
-         if FontDef.desc.nil? then
-                 self.Error("Could not include font definition file #{file}")
+         if FontDef.desc.nil?
+            self.Error("Could not include font definition file #{file}")
          end
 
          i = @fonts.length + 1
@@ -446,7 +448,7 @@ class FPDF
                            'file' => FontDef.file
                         }
 
-         if FontDef.diff then
+         if FontDef.diff
              # Search existing encodings
             unless @diffs.include?(FontDef.diff)
                 @diffs.push(FontDef.diff)
@@ -454,8 +456,8 @@ class FPDF
             end
         end
 
-        if FontDef.file then
-             if FontDef.type == 'TrueType' then
+        if FontDef.file
+             if FontDef.type == 'TrueType'
                  @FontFiles[FontDef.file] = {'length1' => FontDef.originalsize}
              else
                  @FontFiles[FontDef.file] = {'length1' => FontDef.size1, 'length2' => FontDef.size2}
@@ -1309,7 +1311,9 @@ class FPDF
         bpc= a['bits'] ? a['bits'].to_i : 8
 
         # Read whole file
-        data=File.read(file)
+        File.open(file, 'rb') do |f|
+            data = f.read
+        end
         return {'w'=>a['width'],'h'=>a['height'],'cs'=>colspace,'bpc'=>bpc,'f'=>'DCTDecode','data'=>data}
     end
 
@@ -1393,13 +1397,13 @@ class FPDF
         {'w'=>w,'h'=>h,'cs'=>colspace,'bpc'=>bpc,'f'=>'FlateDecode',
             'parms'=>parms,'pal'=>pal,'trns'=>trns,'data'=>data}
     end
-    
+
     def freadint(f)
         # Read a 4-byte integer from file
         a = f.read(4).unpack('N')
         return a[0]
     end
-    
+
     def freadshort(f)
         a = f.read(2).unpack('n')
         return a[0]
