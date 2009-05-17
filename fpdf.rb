@@ -9,13 +9,13 @@
 # Bug fixes, examples, external fonts, JPEG support, and upgrade to version
 # 1.53 contributed by Kim Shrier.
 #
-# Bookmarks contributed by Sylvain Lafleur
+# Bookmarks contributed by Sylvain Lafleur.
 
 require 'date'
 require 'zlib'
 
 class FPDF
-    FPDF_VERSION = '1.53b'
+    FPDF_VERSION = '1.53c'
 
     Charwidths =  {
         'courier'=>[600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600,600],
@@ -428,28 +428,29 @@ class FPDF
                 file = FPDF_FONTPATH + '/' + file
             end
         end
+        
+        # Changed from "require file" to fix bug reported by Hans Allis.
+        load file
 
-         require file
+        if FontDef.desc.nil?
+           self.Error("Could not include font definition file #{file}")
+        end
 
-         if FontDef.desc.nil?
-            self.Error("Could not include font definition file #{file}")
-         end
+        i = @fonts.length + 1
 
-         i = @fonts.length + 1
+        @fonts[fontkey] = {'i'   => i,
+                          'type' => FontDef.type,
+                          'name' => FontDef.name,
+                          'desc' => FontDef.desc,
+                            'up' => FontDef.up,
+                            'ut' => FontDef.ut,
+                            'cw' => FontDef.cw,
+                           'enc' => FontDef.enc,
+                          'file' => FontDef.file
+                       }
 
-         @fonts[fontkey] = {'i'    => i,
-                           'type' => FontDef.type,
-                           'name' => FontDef.name,
-                           'desc' => FontDef.desc,
-                             'up' => FontDef.up,
-                             'ut' => FontDef.ut,
-                             'cw' => FontDef.cw,
-                            'enc' => FontDef.enc,
-                           'file' => FontDef.file
-                        }
-
-         if FontDef.diff
-             # Search existing encodings
+        if FontDef.diff
+            # Search existing encodings
             unless @diffs.include?(FontDef.diff)
                 @diffs.push(FontDef.diff)
                 @fonts[fontkey]['diff'] = @diffs.length - 1
@@ -679,7 +680,10 @@ class FPDF
                     @ws=0
                     out('0 Tw')
                 end
-                self.Cell(w,h,s[j..i],b,2,align,fill)
+                
+                # Changed from s[j..i] to fix bug reported by Hans Allis.
+                self.Cell(w,h,s[j..i-1],b,2,align,fill) 
+                
                 i=i+1
                 sep=-1
                 j=i
@@ -1311,6 +1315,7 @@ class FPDF
         bpc= a['bits'] ? a['bits'].to_i : 8
 
         # Read whole file
+        data = nil
         File.open(file, 'rb') do |f|
             data = f.read
         end
