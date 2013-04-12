@@ -779,7 +779,7 @@ class FPDF
                 sep=i
                 ls=l
             end
-            l=l+cw[c];
+            l=l+cw[c.to_i];
             if l>wmax
                 # Automatic line break
                 if sep==-1
